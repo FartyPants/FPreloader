@@ -1,12 +1,8 @@
 from pathlib import Path
 import gradio as gr
-from modules import utils
 import modules.shared as shared
 from pathlib import Path
 import modules.extensions as extensions_module
-import torch
-import math
-import os
 import sys
 import importlib
 import time
@@ -16,6 +12,7 @@ from sys import version_info
 params = {
     "display_name": "FPreloader",
     "is_tab": True,
+    "timeout": 2.5
 }
 
 refresh_symbol = '\U0001f504'  # 🔄
@@ -72,10 +69,47 @@ def reload_extens():
                     result+='['+name+'] '
 
    
+    return result
+
+def process_allmodules():
+    
+    names = []
+    for i, name in enumerate(shared.args.extensions):
+        if name in extensions_module.available_extensions:
+            if name != 'api':
+                names.append(name+'.')
+
+    result=''
+    for mod in sys.modules:
+        if any(name in mod for name in names):
+            result+=mod+'\n'
+
     return result        
 
+def reload_extensAll():
+   
+    names = []
+    for i, name in enumerate(shared.args.extensions):
+        if name in extensions_module.available_extensions:
+            if name != 'api':
+                names.append(name+'.')
+
+    result=''
+    extensions = []
+    for mod in sys.modules:
+        if any(name in mod for name in names):
+            if mod != "extensions.FPreloader.script":
+                extensions.append(mod)
+
+    
+    for extension in extensions:
+        reload(extension)
+        result+='['+name+'] '
+
+    return result    
+
 def wait_recomp():
-    time.sleep(2.5)
+    time.sleep(params['timeout'])
     shared.need_restart = True
 
 def gradio_restart():
@@ -96,12 +130,41 @@ def ui():
             with gr.Row():
                 gr_reloadonly = gr.Button(value='Reload Extensions') 
                 gr_restart = gr.Button(value='Restart Gradio') 
-        gr_fetch.click(process_extens, None,extensions_box)
-        gr_reload.click(reload_extens, None,extensions_box).then(
+    with gr.Accordion("Deep Reload", open=False):
+        with gr.Row():
+            allmodules = gr.Textbox(label='Extensions + Nested Imports',value = 'Press [Refresh] to see the list')
+            allmodules_fetch = gr.Button('[Refresh]', elem_classes="small-button")
+        with gr.Row():
+            gr_reloadAll = gr.Button(value='Reload All Extensions and Nested Imports + Restart Gradio', variant='stop') 
+
+    with gr.Accordion("Settings", open=True):
+        with gr.Row():
+            with gr.Column():
+                timeout = gr.Slider(0.0, 5.0, value=params['timeout'], step=0.5, label='Timeout (seconds)', info='Timeout between Reload and Restart Gradio (Waiting for recompile)')
+            with gr.Column():
+                with gr.Column():
+                    gr.Markdown('v.06/10/2023')    
+                with gr.Column():
+                    gr.Markdown('https://github.com/FartyPants/FPreloader')    
+
+
+    def sliderchange(slider):  # SelectData is a subclass of EventData
+        params['timeout'] = slider
+   
+    timeout.change(sliderchange,timeout,None)
+
+    allmodules_fetch.click(process_allmodules, None,allmodules)
+    gr_reloadAll.click(reload_extensAll,None,allmodules).then(
                 lambda: None, None, None, _js='() => {document.body.innerHTML=\'<h1 style="font-family:monospace;margin-top:20%;color:blue;text-align:center;">Waiting for recompile...</h1>\'}').then(
                 wait_recomp,None,None).then(
                 lambda: None, None, None, _js='() => {document.body.innerHTML=\'<h1 style="font-family:monospace;margin-top:20%;color:red;text-align:center;">Reloading Gradio...</h1>\'; setTimeout(function(){location.reload()},2500); return []}')
-        gr_reloadonly.click(reload_extens, None,extensions_box)
-        gr_restart.click(gradio_restart, None,extensions_box).then(
+
+    gr_fetch.click(process_extens, None,extensions_box)
+    gr_reload.click(reload_extens, None,extensions_box).then(
+                lambda: None, None, None, _js='() => {document.body.innerHTML=\'<h1 style="font-family:monospace;margin-top:20%;color:blue;text-align:center;">Waiting for recompile...</h1>\'}').then(
+                wait_recomp,None,None).then(
+                lambda: None, None, None, _js='() => {document.body.innerHTML=\'<h1 style="font-family:monospace;margin-top:20%;color:red;text-align:center;">Reloading Gradio...</h1>\'; setTimeout(function(){location.reload()},2500); return []}')
+    gr_reloadonly.click(reload_extens, None,extensions_box)
+    gr_restart.click(gradio_restart, None,extensions_box).then(
                 lambda: None, None, None, _js='() => {document.body.innerHTML=\'<h1 style="font-family:monospace;margin-top:20%;color:red;text-align:center;">Reloading Gradio...</h1>\'; setTimeout(function(){location.reload()},2500); return []}')
   
