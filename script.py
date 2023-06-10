@@ -7,8 +7,16 @@ import modules.extensions as extensions_module
 import torch
 import math
 import os
-import importlib
 import sys
+
+from sys import version_info
+if version_info[0] < 3:
+    pass # Python 2 has built in reload
+elif version_info[0] == 3 and version_info[1] < 4:
+    from imp import reload # Python 3.0 - 3.3 
+else:
+    from importlib import reload # Python 3.4+
+
 
 params = {
     "display_name": "FPreloader",
@@ -52,7 +60,7 @@ def process_extens():
 def reload(full_name):
     if full_name in sys.modules:
       print(f"Reloading module: {full_name}")
-      importlib.reload(sys.modules[full_name])
+      reload(sys.modules[full_name])
 
 
 def reload_extens():
@@ -75,6 +83,8 @@ def reload_extens():
 
 def ui():
 
+
+    print (f"Python {version_info}")
 
     with gr.Accordion("FartyPants Extensions Reloader", open=True):
         
