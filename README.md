@@ -31,4 +31,4 @@ Anytime you press the big red button, your extensions will be reloaded (AKA if y
 
 Use the Deep Reload for reloading all nested imports within the extensions (for example in superbooga chromadb or download_urls will reload as well before the script itself)
 
-
+If nothing of this makes any sense then you are in the wrong repo.
