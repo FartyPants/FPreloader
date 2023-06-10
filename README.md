@@ -26,9 +26,12 @@ Apply and restart interface, now you should see tab FPReloader
 
 Anytime you press the big red button, your extensions will be reloaded (AKA if you made changes, the changes should be reloaded) then Gradio will be restarted
 ... or you can do it in steps: Reload Extensions, then Restart Gradio (
-depending on the size of the extension there needs to be a slight time for python to recompile your modified version, the red button assumes 2.5 sec is enough)
+depending on the size of the extension there needs to be a slight time for python to recompile your modified version, the red button assumes 2.5 sec is enough as defaul)
 
-To do (feel free to pull request):
-- specify your own additional import that needs to be reloaded
-- reload all modules (potentially bad idea)
+## Nested imports (or whatever they are called)
+
+![image](https://github.com/FartyPants/FPreloader/assets/23346289/19425d48-a93d-4ff4-bd7a-fc6dfae2b775)
+
+Use the Deep Reload for reloading all nested imports within the extensions (for example in superbooga chromadb or download_urls will reload as well before the script itself)
+
 
