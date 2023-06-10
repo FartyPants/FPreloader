@@ -118,7 +118,7 @@ def gradio_restart():
 def ui():
 
 
-    print (f"Python {version_info}")
+    print (f"\033[1;31;1m\nFPreloader ready\033[0;37;0m - Python {version_info[0]}.{version_info[1]}.{version_info[2]}")
 
     with gr.Accordion("FartyPants Extensions Reloader", open=True):
         
@@ -144,7 +144,6 @@ def ui():
             with gr.Column():
                 with gr.Column():
                     gr.Markdown('v.06/10/2023')    
-                with gr.Column():
                     gr.Markdown('https://github.com/FartyPants/FPreloader')    
 
 
