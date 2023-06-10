@@ -27,6 +27,7 @@ Apply and restart interface, now you should see tab FPReloader
 Anytime you press the big red button, your extensions will be reloaded (AKA if you made changes, the changes should be reloaded) then Gradio will be restarted
 ... or you can do it in steps: Reload Extensions, then Restart Gradio (
 depending on the size of the extension there needs to be a slight time for python to recompile your modified version, the red button assumes 2.5 sec is enough)
+If your code changes do not involve gradio changes, then Reload Extension could be enough.
 
 To do (feel free to pull request):
 - specify your own additional import that needs to be reloaded
