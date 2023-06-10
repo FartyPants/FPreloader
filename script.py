@@ -75,7 +75,7 @@ def reload_extens():
     return result        
 
 def wait_recomp():
-    time.sleep(3)
+    time.sleep(2.5)
     shared.need_restart = True
 
 def gradio_restart():
