@@ -3,7 +3,6 @@
 An extension to HARD reload all your other extensions. For developers and such.
 
 for all versions of Python
-if need for earlier - this 
 
 This is a shallow process and if your extension has some nested imports, those may not be reloaded. But it will reload your script.py
 (I can later add a deeper reload if needed)
