@@ -1,6 +1,6 @@
 # FPreloader
 
-An extension to HARD reload all your other extensions. For developers and such.
+An extension to HARD reload all your other extensions. For developers and such strange people.
 
 for Python > 3.4
 
