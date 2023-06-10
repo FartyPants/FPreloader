@@ -24,3 +24,7 @@ Apply and restart interface, now you should see tab FPReloader
 
 Anytime you press the big red button, your extensions will be reloaded (AKA if you made changes, you will see the changes)
 
+To do (feel free to pull request):
+- specify your own additional import that needs to be reloaded
+- reload all modules (potentially bad idea)
+
