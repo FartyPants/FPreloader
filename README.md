@@ -34,4 +34,19 @@ Anytime you press the big red button, your extensions will be reloaded (AKA if y
 
 Use the Deep Reload for reloading all nested imports within the extensions (for example in superbooga chromadb or download_urls will reload as well before the script itself)
 
+## Debug View Options
+allows you to see attributes etc...
+
+![image](https://github.com/FartyPants/FPreloader/assets/23346289/26882162-2a41-4274-97e1-e2ba22bc929d)
+
+Attribute watch - type attribute of currently viewed module you want to see, instead of all. Comma delimited
+
+![image](https://github.com/FartyPants/FPreloader/assets/23346289/1d8dcef0-fa1a-417d-b740-3c38905ffc88)
+
+Dictionaries - you can type the exact dictionary key (you don't need to use ' or " for keys)
+
+![image](https://github.com/FartyPants/FPreloader/assets/23346289/66a9a11e-b294-4a3f-a015-9a665cf9e337)
+
+The monitor doesn't update by itself, when the value change you need to press refresh.
+
 If nothing of this makes any sense then you are in the wrong repo.
