@@ -53,7 +53,8 @@ The monitor doesn't update by itself, when the value change you need to press re
 ```
 Task                     Module View          Attribute Watch
 _____________________________________________________________________
-python version            sys              version, _base_executable
+Get python version          sys              version, _base_executable
+Arguments                   sys              argv
 
 ```
 
