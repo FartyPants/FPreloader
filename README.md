@@ -1,4 +1,4 @@
-# FPreloader
+# FPreloader (now with Attribute monitor)
 
 An extension that will make your life as an extension developer this much easier > ----- < 
 
