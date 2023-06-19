@@ -183,8 +183,14 @@ def display_module(ext_module,module_name):
                             else:    
                                 line =line+ f"     \'{key}\': {valstr},\n" 
                         line =line+ "}\n"           
-                    else:    
-                        line = f"{itemstr}:\n{value}\n\n"
+                    else:
+                        valstr = f'{value}'
+                        if isinstance(value, str):
+                            valstr = valstr.replace('\n','\\n')
+                            valstr = valstr.replace("'","\\'")
+                            valstr = "'"+valstr+"'"
+    
+                        line = f"{itemstr}: {valstr}\n\n"
                     lines = lines+line
             else:
                 line = f"{itemstr}: --none--\n\n"
