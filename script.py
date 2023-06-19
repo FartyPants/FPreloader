@@ -203,19 +203,31 @@ def display_module(ext_module,module_name):
     for item in ext_module_items:
         if not callable(getattr(ext_module, item)) and not item.startswith('__') and not item=='gradio':
             value = getattr(ext_module, item)
-            line = f"{item}: {value}\n"
+            type_str = f"{type(value).__name__}"
+            value_str = f"{value}"
+            if type_str=='str':
+                value_str = "'"+value_str+"'"
+            if type_str:
+                type_str = "("+type_str+") "
+
+            line = f"{item}: {type_str}{value_str}\n"
+            #line = f"{item}: {value}\n"
             lines = lines+line
 
     lines = lines+ '#----Functions:----\n'
     
     for item in ext_module_items:
         obj = getattr(ext_module, item)
-        if inspect.isfunction(obj):
-            signature = inspect.signature(obj)
-            parameters = list(signature.parameters.keys())
-            parameters_str = ', '.join(parameters)
-            line = f"{item}({parameters_str})\n"
-            lines = lines+line
+        try:
+            if inspect.isfunction(obj):
+                signature = inspect.signature(obj)
+                #parameters = list(signature.parameters.keys())
+                #parameters_str = ', '.join(parameters)
+                line = f"{item}{signature}\n"
+                lines = lines+line
+        except Exception as e:
+            print(f"Error occurred while inspecting {item}: {str(e)}")
+                
 
     lines = lines+ '#----Classes:----\n'
     for item in ext_module_items:
