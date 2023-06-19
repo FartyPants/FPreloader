@@ -50,11 +50,11 @@ Dictionaries - you can type the exact dictionary key (you don't need to use ' or
 The monitor doesn't update by itself, when the value change you need to press refresh.
 
 ## Tips
-
+```
 Task                     Module View          Attribute Watch
 _____________________________________________________________________
 python version            sys              version, _base_executable
 
-
+```
 
 If nothing of this makes any sense then you are in the wrong repo.
