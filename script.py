@@ -7,19 +7,31 @@ import sys
 import importlib
 import time
 import inspect
-
+from modules import utils
+import os
+import json
 from sys import version_info
+
+file_nameJSON = "FPreloader.json"
 
 params = {
     "display_name": "FPreloader",
     "is_tab": True,
-    "timeout": 2.5
+    "timeout": 2.5,
+    "LORAsubs": False,
+    "LORATime": False,
+    "MODELTime": False
+
 }
 
-
+original_get_available_loras = utils.get_available_loras
+original_get_available_models = utils.get_available_models
 loaded_extens = []
 
 attribute_watch = []
+
+Lora_sortedByTime=False
+Lora_witSubs=False
 
 # currently displayed extension in the data view
 current_extension = ''
@@ -289,7 +301,139 @@ def attributewatch(attribs):
 
     return textout
 
+def get_available_lorasProper():
+    return sorted([item.name for item in list(Path(shared.args.lora_dir).glob('*')) if not item.name.endswith(('.txt', '-np', '.pt', '.json'))], key=utils.natural_keys)
+
+def list_subfolders2(directory, subdir):
+    subfolders = []
+    for entry in os.scandir(directory):
+        if entry.is_dir() and entry.name != 'runs':
+            newdir = f"{subdir}/{entry.name}"
+            subfolders.append(newdir)
+
+    return sorted(subfolders, key=utils.natural_keys)
+
+
+def list_subfoldersROOT(directory):
+    subfolders = []
+    for entry in os.scandir(directory):
+        if entry.is_dir():
+            newdir = f"{directory}/{entry.name}"
+            subfolders.append(entry.name)
+            subfolders = subfolders+list_subfolders2(newdir,entry.name)
+
+    
+    return sorted(subfolders, key=utils.natural_keys)
+
+
+def sorted_ls(path):
+    mtime = lambda f: os.stat(os.path.join(path, f)).st_mtime
+    return list(sorted(os.listdir(path), key=mtime))
+
+def list_subfoldersByTime(directory,isSubfolders):
+
+    if not directory.endswith('/'):
+        directory += '/'
+    subfolders = []
+    path = directory
+    name_list = os.listdir(path)
+    full_list = [os.path.join(path,i) for i in name_list]
+    time_sorted_list = sorted(full_list, key=os.path.getmtime,reverse=True)
+
+    for entry in time_sorted_list:
+        if os.path.isdir(entry):
+            entry_str = f"{entry}"  # Convert entry to a string
+            full_path = entry_str
+            entry_str = entry_str.replace('\\','/')
+            entry_str = entry_str.replace(f"{directory}", "")  # Remove directory part
+            subfolders.append(entry_str)
+            if isSubfolders:
+                subfolders = subfolders+ list_subfolders2(full_path,entry_str)
+
+    return subfolders
+
+
+def get_available_loras_monkey():
+    print("[FP] LORA Detour Activated")
+    model_dir = shared.args.lora_dir  # Update with the appropriate directory path
+    subfolders = []
+    if Lora_sortedByTime:
+        subfolders = list_subfoldersByTime(model_dir,Lora_witSubs)
+    else:
+        subfolders = list_subfoldersROOT(model_dir)        
+ 
+
+    return subfolders
+
+def get_available_models_monkey():
+    print("[FP] MODELS Detour Activated")
+    model_dir = shared.args.model_dir  # Update with the appropriate directory path
+    subfolders = []
+    subfolders = list_subfoldersByTime(model_dir, False)        
+ 
+    return subfolders
+
+def save_PRAMS():
+    return
+#    try:    
+#        global params
+#        with open(file_nameJSON, 'w') as json_file:
+#            json.dump(params, json_file,indent=2)
+#            #print(f"Saved: {file_nameJSON}")
+#    except IOError as e:
+#        print(f"An error occurred while saving the file: {e}") 
+
+def update_monkey_detour_internal(bEnableSubs,bEnableTimeSort):
+    global Lora_sortedByTime
+    global Lora_witSubs
+    Lora_witSubs = bEnableSubs
+    Lora_sortedByTime = bEnableTimeSort
+
+    if bEnableSubs or bEnableTimeSort:
+        utils.get_available_loras = get_available_loras_monkey
+        print(f"[FP] LoRA Subfolders: {Lora_witSubs}, Sorted by Time: {Lora_sortedByTime}")
+    else:
+        utils.get_available_loras = original_get_available_loras
+        print("[FP] LoRA Detour Deactivated")
+ 
+
+def update_monkey_detour(bEnableSubs,bEnableTimeSort):
+    update_monkey_detour_internal(bEnableSubs,bEnableTimeSort)
+    params.update({"LORAsubs": bEnableSubs})
+    params.update({"LORATime": bEnableTimeSort})
+    save_PRAMS()    
+
+def update_monkey_detour_models_internal(bEnableMonkey):
+    if bEnableMonkey:
+        utils.get_available_models = get_available_models_monkey
+        print(f"[FP] Models Sorted by Time")
+    else:
+        utils.get_available_models = original_get_available_models
+        print("[FP] Models Detour Deactivated")
+
+ 
+def update_monkey_detour_models(bEnableMonkey):
+    update_monkey_detour_models_internal(bEnableMonkey)
+    params.update({"MODELTime": bEnableMonkey})
+    save_PRAMS()
+
+
 def ui():
+
+#   try:
+#       with open(file_nameJSON, 'r') as json_file:
+#           new_params = json.load(json_file)
+#           for item in new_params:
+#               params[item] = new_params[item]
+#   except FileNotFoundError:
+#       params.update({"MODELTime": False})
+#
+#   if params['MODELTime']:
+#       update_monkey_detour_models_internal(params['MODELTime'])
+# 
+#   if params['LORAsubs'] or params['LORATime']:
+#       update_monkey_detour_internal(params['LORAsubs'],params['LORATime'])
+
 
     modelview = f"{shared.model}"
     obj_class = type(shared.model)
@@ -340,18 +484,22 @@ def ui():
                                     gr_custApp2 = gr.Button(value="Back")
                 
                 preview3 = gr.Code(label='module', lines=4, value="# Data View\n",language="python")
- 
-
+    with gr.Accordion("FartyPants Monkey Bussines", open=False):
+        with gr.Row():
+            with gr.Column():
+                monkey_detour = gr.Checkbox(value = params['LORAsubs'], label='List LoRA + Checkpoints', info='When enabled, the LoRA menu will also shows all nested checkpoints')
+                monkey_TimeSort = gr.Checkbox(value = params['LORATime'], label='Sort LoRA by recently created', info='When enabled, the LoRA menu will be sorted by time with newest LoRA(s) first')
+                monkey_TimeSortMod = gr.Checkbox(value = params['MODELTime'], label='Sort MODELS by recently added', info='When enabled, the MODELS menu will be sorted by time with newest models first')
+                monkey_patch = gr.Checkbox(value = shared.args.monkey_patch, label='Apply/Remove --monkeypatch without restarting', info='You still need to reload model if it was previously loaded with GPTQ_for_LLaAMA (untested feature)')    
     with gr.Accordion("Settings", open=True):
         with gr.Row():
             with gr.Column():
                 timeout = gr.Slider(0.0, 5.0, value=params['timeout'], step=0.5, label='Timeout (seconds)', info='Timeout between Reload and Restart Gradio (Waiting for recompile)')
             with gr.Column():
-                with gr.Column():
-                    gr.Markdown('v.06/18/2023')    
-                    gr.Markdown('https://github.com/FartyPants/FPreloader')    
+                gr.Markdown('v.06/18/2023')    
+                gr.Markdown('https://github.com/FartyPants/FPreloader')    
 
-
+    
     def sliderchange(slider):  # SelectData is a subclass of EventData
         params['timeout'] = slider
    
@@ -390,3 +538,20 @@ def ui():
 
     gr_custApp.click(custom_module,[gr_customMod,gr_radio],preview3).then(lambda x : gr.update(label=x), gr_customMod, preview3)
     gr_custApp2.click(radio_change,gr_radio,preview3).then(lambda x : gr.update(label=x), gr_radio, preview3)
+
+    def reload_lora():
+        return gr.Dropdown.update(choices=utils.get_available_loras())
+    
+    monkey_detour.change(update_monkey_detour,[monkey_detour,monkey_TimeSort],None).then(reload_lora,None,shared.gradio['lora_menu'])
+    monkey_TimeSort.change(update_monkey_detour,[monkey_detour,monkey_TimeSort],None).then(reload_lora,None,shared.gradio['lora_menu'])
+   
+    def update_monkeypatch(x):
+        shared.args.monkey_patch = x
+        print(f"--monkeypath: {shared.args.monkey_patch}")
+        
+    monkey_patch.change(update_monkeypatch,monkey_patch,None)
+
+    def reload_models():
+        return gr.Dropdown.update(choices=utils.get_available_models())
+ 
+    monkey_TimeSortMod.change(update_monkey_detour_models,monkey_TimeSortMod,None).then(reload_models,None,shared.gradio['model_menu'])
