@@ -57,5 +57,11 @@ Get python version          sys              version, _base_executable
 Arguments                   sys              argv
 
 ```
+## Monkey stuff
+Detour sorting of LORA and Models so the dropdown displays the recently added models/lora first
+Detour allowing LORA to display and use checkpoints in the LORA menu
+
+![image](https://github.com/FartyPants/FPreloader/assets/23346289/215b2e62-658d-4392-a983-7e3260f59012)
+
 
 If nothing of this makes any sense then you are in the wrong repo.
