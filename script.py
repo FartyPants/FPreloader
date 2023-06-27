@@ -64,6 +64,7 @@ def process_extens():
 
     loaded_extens.clear()
 
+    loaded_extens.append("[sys.modules]")
     result = ''
     for i, name in enumerate(shared.args.extensions):
         if name in extensions_module.available_extensions:
@@ -253,8 +254,14 @@ def display_module(ext_module,module_name):
 
 
 def radio_change(selected_extension):
-    extension = f"extensions.{selected_extension}.script"
     global current_extension
+
+    if selected_extension=="[sys.modules]":
+       current_extension = '[sys.modules]'
+       return modulenames()     
+
+    extension = f"extensions.{selected_extension}.script"
+
     textout = ''
     current_extension = ''
     if extension in sys.modules:
@@ -274,6 +281,7 @@ def custom_module(module,selected_extension):
     if module=='':
         textout = radio_change(selected_extension)
         return textout
+    
     current_extension = ''
     if module in sys.modules:
         ext_module = sys.modules[module]
@@ -284,6 +292,53 @@ def custom_module(module,selected_extension):
 
     return textout
 
+def modulenames():
+    global current_extension
+    module_names = list(sys.modules.keys())
+    lines = ''
+    current_extension = '[sys.modules]'
+    lines = f"# All imported modules\n"
+
+    if len(attribute_watch) > 0:
+        for module_name in module_names:
+            for item in attribute_watch:
+                itemstr = f"{item}"
+                if module_name.startswith(itemstr):
+                    lines += f"{module_name}\n"
+
+        return lines   
+
+    grouped_modules = {}
+    
+    grouped_modules["0stock_import"] = []
+    grouped_modules["_0stock_import"] = []
+    for module_name in module_names:
+        parts = module_name.split('.')
+        prefix = parts[0]  # Use the first part as the prefix
+        if len(parts)==1:
+            if prefix.startswith('_'):
+                grouped_modules["_0stock_import"].append(module_name)
+            else:
+                grouped_modules["0stock_import"].append(module_name)
+        else:
+            if prefix in grouped_modules:
+                grouped_modules[prefix].append(module_name)
+            else:
+                grouped_modules[prefix] = [module_name]
+
+    grouped_modules["0stock_import"] = sorted(grouped_modules["0stock_import"])
+    grouped_modules["_0stock_import"] = sorted(grouped_modules["_0stock_import"])
+
+    sorted_keys = sorted(grouped_modules.items())
+    # Print the grouped modules
+    lines = "# Grouped imported modules\n"
+
+    for prefix, modules in sorted_keys:
+        line = f"{', '.join(modules)}\n"
+        lines += line
+
+    return lines   
+
 def attributewatch(attribs):
     global attribute_watch
     if attribs:
@@ -292,6 +347,9 @@ def attributewatch(attribs):
         attribute_watch = []
 
     extension = current_extension    
+    if extension=='[sys.modules]':
+        return modulenames() 
+
     if extension in sys.modules:
         ext_module = sys.modules[extension]
         ext_module = sys.modules[extension]
@@ -417,6 +475,10 @@ def update_monkey_detour_models(bEnableMonkey):
     params.update({"MODELTime": bEnableMonkey})
     save_PRAMS()
 
+def colored(r, g, b, text):
+    return f"\033[38;2;{r};{g};{b}m{text}\033[0m"
+#print(colored(255, 0, 0, 'Hello, World!'))
+#coloured = lambda r, g, b, text: f"\033[38;2;{r};{g};{b}m{text}\033[38;2;255;255;255m"
 
 def ui():
 
@@ -490,7 +552,7 @@ def ui():
                 monkey_detour = gr.Checkbox(value = params['LORAsubs'], label='List LoRA + Checkpoints', info='When enabled, the LoRA menu will also shows all nested checkpoints')
                 monkey_TimeSort = gr.Checkbox(value = params['LORATime'], label='Sort LoRA by recently created', info='When enabled, the LoRA menu will be sorted by time with newest LoRA(s) first')
                 monkey_TimeSortMod = gr.Checkbox(value = params['MODELTime'], label='Sort MODELS by recently added', info='When enabled, the MODELS menu will be sorted by time with newest models first')
-                monkey_patch = gr.Checkbox(value = shared.args.monkey_patch, label='Apply/Remove --monkeypatch without restarting', info='You still need to reload model if it was previously loaded with GPTQ_for_LLaAMA (untested feature)')    
+                monkey_patch = gr.Checkbox(value = shared.args.monkey_patch, label='Apply/Remove --monkeypatch without restarting', info='You still need to reload model if it was previously loaded with GPTQ_for_LLaAMA (Ok for interference but not for Training!)')    
     with gr.Accordion("Settings", open=True):
         with gr.Row():
             with gr.Column():
