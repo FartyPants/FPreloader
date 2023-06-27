@@ -64,7 +64,7 @@ Detour allowing LORA to display and use checkpoints in the LORA menu
 ![image](https://github.com/FartyPants/FPreloader/assets/23346289/215b2e62-658d-4392-a983-7e3260f59012)
 
 
-##Additions
+## Additions
 List imported python modules
 ![image](https://github.com/FartyPants/FPreloader/assets/23346289/295b4267-7546-4fc4-9939-01e767cdda0b)
 
