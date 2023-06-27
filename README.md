@@ -1,5 +1,8 @@
 # FPreloader (now with Attribute monitor)
 
+Support me if you can.
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/Q5Q5MOB4M)
+
 An extension that will make your life as an extension developer this much easier > ----- < 
 
 FPreloader will HARD reload all your other extensions. It's like that one ring that rules the other rings, or something on that note.
