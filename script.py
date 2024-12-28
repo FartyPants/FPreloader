@@ -11,6 +11,7 @@ from modules import utils
 import os
 import json
 from sys import version_info
+import modules.training as training
 
 file_nameJSON = "FPreloader.json"
 
@@ -20,7 +21,8 @@ params = {
     "timeout": 2.5,
     "LORAsubs": False,
     "LORATime": False,
-    "MODELTime": False
+    "MODELTime": False,
+    "additional":''
 
 }
 
@@ -98,7 +100,16 @@ def reload_extens():
                     reload(extension)
                     result+='['+name+'] '
 
-   
+    additional = params['additional']
+    if additional:
+        additional_array = additional.split(",")
+        additional_array = [item.strip() for item in additional_array]
+        for item in additional_array:
+            if item in sys.modules:
+                reload(item)
+                result+='['+item+'] '
+
+
     return result
 
 def process_allmodules():
@@ -479,9 +490,15 @@ def colored(r, g, b, text):
     return f"\033[38;2;{r};{g};{b}m{text}\033[0m"
 #print(colored(255, 0, 0, 'Hello, World!'))
 #coloured = lambda r, g, b, text: f"\033[38;2;{r};{g};{b}m{text}\033[38;2;255;255;255m"
+train_choices = ["All Modules","Attention Layers","Only Q and V layers"]
 
 def ui():
 
+    from peft.utils.other import \
+    TRANSFORMERS_MODELS_TO_LORA_TARGET_MODULES_MAPPING as \
+    model_to_lora_modules
+
+    global train_choices
 #   try:
 #       with open(file_nameJSON, 'r') as json_file:
 #           new_params = json.load(json_file)
@@ -496,6 +513,17 @@ def ui():
 #   if params['LORAsubs'] or params['LORATime']:
 #       update_monkey_detour_internal(params['LORAsubs'],params['LORATime'])
 
+    all_modules = ["gate_proj","down_proj","up_proj","q_proj","k_proj","v_proj","o_proj"]
+    all_attention =  ["q_proj","k_proj", "v_proj", "o_proj"]
+    standard_QV = ["q_proj", "v_proj"]
+    
+    selected_train = train_choices[2]
+
+    if model_to_lora_modules["llama"]==all_modules:
+        selected_train = train_choices[0]
+    if model_to_lora_modules["llama"]==all_attention:
+        selected_train = train_choices[1]
+
 
     modelview = f"{shared.model}"
     obj_class = type(shared.model)
@@ -508,6 +536,8 @@ def ui():
         with gr.Row():
             extensions_box = gr.Textbox(label='Loaded Extensions',value = process_extens())
             gr_fetch = gr.Button('[Refresh]', elem_classes="small-button")  
+        with gr.Row():
+            gr_additional = gr.Textbox(label='Additional modules ( ex: modules.training )',interactive=True, value=params['additional'])    
         with gr.Row():
             gr_reload = gr.Button(value='Reload All Extensions + Restart Gradio', variant='stop') 
             with gr.Row():
@@ -553,12 +583,13 @@ def ui():
                 monkey_TimeSort = gr.Checkbox(value = params['LORATime'], label='Sort LoRA by recently created', info='When enabled, the LoRA menu will be sorted by time with newest LoRA(s) first')
                 monkey_TimeSortMod = gr.Checkbox(value = params['MODELTime'], label='Sort MODELS by recently added', info='When enabled, the MODELS menu will be sorted by time with newest models first')
                 monkey_patch = gr.Checkbox(value = shared.args.monkey_patch, label='Apply/Remove --monkeypatch without restarting', info='You still need to reload model if it was previously loaded with GPTQ_for_LLaAMA (Ok for interference but not for Training!)')    
+                monkey_Training = gr.Radio(value = selected_train, label='Traing Target Modules', info='Change the LLaMA training target modules', choices=train_choices)    
     with gr.Accordion("Settings", open=True):
         with gr.Row():
             with gr.Column():
                 timeout = gr.Slider(0.0, 5.0, value=params['timeout'], step=0.5, label='Timeout (seconds)', info='Timeout between Reload and Restart Gradio (Waiting for recompile)')
             with gr.Column():
-                gr.Markdown('v.06/18/2023')    
+                gr.Markdown('v.07/04/2023')    
                 gr.Markdown('https://github.com/FartyPants/FPreloader')    
 
     
@@ -582,6 +613,13 @@ def ui():
     gr_restart.click(gradio_restart, None,extensions_box).then(
                 lambda: None, None, None, _js='() => {document.body.innerHTML=\'<h1 style="font-family:monospace;margin-top:20%;color:red;text-align:center;">Reloading Gradio...</h1>\'; setTimeout(function(){location.reload()},2500); return []}')
   
+
+    def update_additional(x):
+        global params
+        params.update({"additional": x})
+        
+ 
+    gr_additional.change(update_additional,gr_additional,None)
 
     def do_refresh():
         obj_class = type(shared.model)
@@ -612,6 +650,25 @@ def ui():
         print(f"--monkeypath: {shared.args.monkey_patch}")
         
     monkey_patch.change(update_monkeypatch,monkey_patch,None)
+
+    def update_training(trmode):
+        global train_choices
+
+        all_modules = ["gate_proj","down_proj","up_proj","q_proj","k_proj","v_proj","o_proj"]
+        all_attention =  ["q_proj","k_proj", "v_proj", "o_proj"]
+        standard_QV = ["q_proj", "v_proj"]
+
+        if trmode==train_choices[0]:
+            model_to_lora_modules["llama"] = all_modules
+        elif trmode==train_choices[1]:
+            model_to_lora_modules["llama"] = all_attention
+        else:
+            model_to_lora_modules["llama"] = standard_QV              
+        
+        projections_string = ", ".join([projection.replace("_proj", "") for projection in model_to_lora_modules['llama']])
+        print(f"Training target modules set to: ({projections_string}) projections")
+
+    monkey_Training.change(update_training,monkey_Training,None)
 
     def reload_models():
         return gr.Dropdown.update(choices=utils.get_available_models())
