@@ -582,7 +582,6 @@ def ui():
                 monkey_detour = gr.Checkbox(value = params['LORAsubs'], label='List LoRA + Checkpoints', info='When enabled, the LoRA menu will also shows all nested checkpoints')
                 monkey_TimeSort = gr.Checkbox(value = params['LORATime'], label='Sort LoRA by recently created', info='When enabled, the LoRA menu will be sorted by time with newest LoRA(s) first')
                 monkey_TimeSortMod = gr.Checkbox(value = params['MODELTime'], label='Sort MODELS by recently added', info='When enabled, the MODELS menu will be sorted by time with newest models first')
-                monkey_patch = gr.Checkbox(value = shared.args.monkey_patch, label='Apply/Remove --monkeypatch without restarting', info='You still need to reload model if it was previously loaded with GPTQ_for_LLaAMA (Ok for interference but not for Training!)')    
                 monkey_Training = gr.Radio(value = selected_train, label='Traing Target Modules', info='Change the LLaMA training target modules', choices=train_choices)    
     with gr.Accordion("Settings", open=True):
         with gr.Row():
@@ -645,12 +644,6 @@ def ui():
     monkey_detour.change(update_monkey_detour,[monkey_detour,monkey_TimeSort],None).then(reload_lora,None,shared.gradio['lora_menu'])
     monkey_TimeSort.change(update_monkey_detour,[monkey_detour,monkey_TimeSort],None).then(reload_lora,None,shared.gradio['lora_menu'])
    
-    def update_monkeypatch(x):
-        shared.args.monkey_patch = x
-        print(f"--monkeypath: {shared.args.monkey_patch}")
-        
-    monkey_patch.change(update_monkeypatch,monkey_patch,None)
-
     def update_training(trmode):
         global train_choices
 
